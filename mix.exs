@@ -20,7 +20,8 @@ defmodule LoggerGraylogBackend.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.18", only: :dev, runetime: false},
-      {:dialyxir, "~> 0.5", only: :dev, runtime: false}
+      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+      {:jason, "~> 1.0-rc"}
     ]
   end
 end
