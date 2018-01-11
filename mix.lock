@@ -3,4 +3,5 @@
   "earmark": {:hex, :earmark, "1.2.4", "99b637c62a4d65a20a9fb674b8cffb8baa771c04605a80c911c4418c69b75439", [], [], "hexpm"},
   "ex_doc": {:hex, :ex_doc, "0.18.1", "37c69d2ef62f24928c1f4fdc7c724ea04aecfdf500c4329185f8e3649c915baf", [], [{:earmark, "~> 1.1", [hex: :earmark, repo: "hexpm", optional: false]}], "hexpm"},
   "jason": {:hex, :jason, "1.0.0-rc.2", "149715b008fa2a8a5d663fcbe09176e037df402e0346b48eb19f56b59f298dca", [], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm"},
+  "optium": {:hex, :optium, "0.3.0", "605624128be47aad7f54304ceacca3c0c8454cf3edde10d648b4e1aa9dae64d6", [], [], "hexpm"},
 }
