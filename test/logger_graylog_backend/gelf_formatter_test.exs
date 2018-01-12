@@ -30,6 +30,23 @@ defmodule LoggerGraylogBackend.GelfFormatterTest do
     end
   end
 
+  describe "format/6" do
+    test "doesn't include timestamp if the option is passed" do
+      {:ok, gelf} =
+        Formatter.format(
+          "host",
+          :warn,
+          "hello",
+          generate_timestamp(),
+          [],
+          include_timestamp: false
+        )
+        |> decode()
+
+      refute Map.has_key?(gelf, "timestamp")
+    end
+  end
+
   ## Helpers
 
   @spec decode(iodata) :: {:ok, map()}

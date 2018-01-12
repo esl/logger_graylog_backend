@@ -13,7 +13,8 @@ defmodule LoggerGraylogBackend.Tcp do
     :gelf_host,
     socket: :disconnected,
     level: :info,
-    metadata_filter: []
+    metadata_filter: [],
+    include_timestamp: true
   ]
 
   @levels [:debug, :info, :warn, :error]
@@ -26,7 +27,8 @@ defmodule LoggerGraylogBackend.Tcp do
           socket: :disconnected | {:connected, :gen_tcp.socket()},
           level: Logger.level(),
           metadata_filter: metadata_filter,
-          gelf_host: Formatter.host()
+          gelf_host: Formatter.host(),
+          include_timestamp: boolean
         }
 
   ## :gen_event callbacks
@@ -130,10 +132,24 @@ defmodule LoggerGraylogBackend.Tcp do
          message,
          timestamp,
          metadata,
-         %{socket: {:connected, socket}, host: host, port: port} = state
+         %{
+           socket: {:connected, socket},
+           host: host,
+           port: port,
+           include_timestamp: include_timestamp
+         } = state
        ) do
     metadata_to_send = extract_metadata(metadata, state.metadata_filter)
-    log = Formatter.format(state.gelf_host, level, message, timestamp, metadata_to_send)
+
+    log =
+      Formatter.format(
+        state.gelf_host,
+        level,
+        message,
+        timestamp,
+        metadata_to_send,
+        include_timestamp: include_timestamp
+      )
 
     case :gen_tcp.send(socket, [log, 0]) do
       :ok ->
@@ -221,7 +237,8 @@ defmodule LoggerGraylogBackend.Tcp do
       host: [required: true],
       level: [default: :info, validator: &log_level?/1],
       metadata: [default: :all, validator: &metadata_opt?/1],
-      override_host: [default: false, validator: &override_host_opt?/1]
+      override_host: [default: false, validator: &override_host_opt?/1],
+      include_timestamp: [default: true, validator: &is_boolean/1]
     }
 
   @spec init_state(config :: Keyword.t()) :: {:ok, state} | {:error, String.t()}
@@ -234,7 +251,8 @@ defmodule LoggerGraylogBackend.Tcp do
           socket: :disconnected,
           level: opts[:level],
           metadata_filter: opts[:metadata],
-          gelf_host: get_gelf_host(opts[:override_host])
+          gelf_host: get_gelf_host(opts[:override_host]),
+          include_timestamp: opts[:include_timestamp]
         }
 
         {:ok, maybe_host_to_charlist(state)}
@@ -249,7 +267,8 @@ defmodule LoggerGraylogBackend.Tcp do
     do: %{
       level: [validator: &log_level?/1],
       metadata: [validator: &metadata_opt?/1],
-      override_host: [validator: &override_host_opt?/1]
+      override_host: [validator: &override_host_opt?/1],
+      include_timestamp: [validator: &is_boolean/1]
     }
 
   @spec configure(state, config :: Keyword.t()) :: {:ok, state} | {:error, String.t()}
@@ -265,11 +284,21 @@ defmodule LoggerGraylogBackend.Tcp do
               state.gelf_host
           end
 
+        new_include_timestamp =
+          case is_boolean(opts[:include_timestamp]) do
+            true ->
+              opts[:include_timestamp]
+
+            false ->
+              state.include_timestamp
+          end
+
         new_state = %__MODULE__{
           state
           | level: opts[:level] || state.level,
             metadata_filter: opts[:metadata] || state.metadata_filter,
-            gelf_host: new_gelf_host
+            gelf_host: new_gelf_host,
+            include_timestamp: new_include_timestamp
         }
 
         {:ok, new_state}

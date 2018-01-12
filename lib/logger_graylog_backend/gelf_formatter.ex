@@ -13,24 +13,53 @@ defmodule LoggerGraylogBackend.GelfFormatter do
 
   ## API
 
-  @spec format(host, Logger.level(), Logger.message(), :calendar.datetime(), Logger.metadata()) ::
-          iodata
-  def format(host, level, message, timestamp, metadata) do
+  @spec format(
+          host,
+          Logger.level(),
+          Logger.message(),
+          :calendar.datetime(),
+          Logger.metadata()
+        ) :: iodata
+  def format(host, level, message, timestamp, metadata),
+    do: format(host, level, message, timestamp, metadata, [])
+
+  @spec format(
+          host,
+          Logger.level(),
+          Logger.message(),
+          :calendar.datetime(),
+          Logger.metadata(),
+          Keyword.t()
+        ) :: iodata
+  def format(host, level, message, timestamp, metadata, opts) do
     mandatory_fields = %{
       "version" => @gelf_version,
       "host" => host,
       "short_message" => IO.chardata_to_string(message),
-      "timestamp" => format_timestamp(timestamp),
       "level" => format_level(level)
     }
+
+    timestamp_field = maybe_timestamp_field(timestamp, opts)
 
     additional_fields =
       metadata |> Enum.map(fn {k, v} -> {["_", to_string(k)], v} end) |> Enum.into(%{})
 
-    mandatory_fields |> Map.merge(additional_fields) |> Jason.encode_to_iodata!()
+    mandatory_fields |> Map.merge(timestamp_field) |> Map.merge(additional_fields)
+    |> Jason.encode_to_iodata!()
   end
 
   ## Helpers
+
+  @spec maybe_timestamp_field(timestamp, Keyword.t()) :: map
+  defp maybe_timestamp_field(timestamp, opts) do
+    case Keyword.get(opts, :include_timestamp, true) do
+      true ->
+        %{"timestamp" => format_timestamp(timestamp)}
+
+      false ->
+        %{}
+    end
+  end
 
   @spec format_level(Logger.level()) :: 7 | 6 | 4 | 3
   defp format_level(:debug), do: 7
