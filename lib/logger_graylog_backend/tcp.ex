@@ -20,7 +20,7 @@ defmodule LoggerGraylogBackend.Tcp do
   @levels [:debug, :info, :warn, :error]
 
   @type host :: :inet.hostname() | :inet.ip_address()
-  @type metadata_filter :: :all | [atom]
+  @type metadata_filter :: :all | [atom] | {module, function :: atom}
   @type state :: %__MODULE__{
           host: host,
           port: :inet.port_number(),
@@ -139,7 +139,8 @@ defmodule LoggerGraylogBackend.Tcp do
            include_timestamp: include_timestamp
          } = state
        ) do
-    metadata_to_send = extract_metadata(metadata, state.metadata_filter)
+    metadata_to_send =
+      extract_metadata(level, message, timestamp, metadata, state.metadata_filter)
 
     log =
       Formatter.format(
@@ -166,9 +167,19 @@ defmodule LoggerGraylogBackend.Tcp do
     end
   end
 
-  @spec extract_metadata(Logger.metadata(), metadata_filter) :: Logger.metadata()
-  defp extract_metadata(metadata, :all), do: metadata
-  defp extract_metadata(metadata, keys), do: Keyword.take(metadata, keys)
+  @spec extract_metadata(
+          Logger.level(),
+          Logger.message(),
+          Formatter.timestamp(),
+          Logger.metadata(),
+          metadata_filter
+        ) :: Logger.metadata()
+  defp extract_metadata(_, _, _, metadata, :all), do: metadata
+
+  defp extract_metadata(level, message, ts, metadata, {module, function}),
+    do: apply(module, function, [level, message, ts, metadata])
+
+  defp extract_metadata(_, _, _, metadata, keys), do: Keyword.take(metadata, keys)
 
   @spec get_gelf_host(false | Formatter.host()) :: Formatter.host()
   defp get_gelf_host(false) do
@@ -319,6 +330,7 @@ defmodule LoggerGraylogBackend.Tcp do
   @spec metadata_opt?(term) :: boolean()
   defp metadata_opt?(:all), do: true
   defp metadata_opt?(term) when is_list(term), do: Enum.all?(term, &is_atom/1)
+  defp metadata_opt?({module, function}) when is_atom(module) and is_atom(function), do: true
   defp metadata_opt?(_), do: false
 
   @spec override_host_opt?(term) :: boolean()
