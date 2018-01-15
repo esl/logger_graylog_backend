@@ -5,7 +5,7 @@ defmodule LoggerGraylogBackend.MixProject do
     [
       app: :logger_graylog_backend,
       version: "0.1.0",
-      elixir: "~> 1.6-dev",
+      elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       # docs

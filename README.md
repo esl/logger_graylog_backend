@@ -10,7 +10,7 @@ This library is not available on Hex (yet). You need to pull it directly from Gi
 
 ```elixir
 def deps do
-  [{:logger_graylog_backend, github: "esl/logger_graylog_backend"}, ...]
+  [{:logger_graylog_backend, github: "esl/logger_graylog_backend", tag: "v0.1.0"}, ...]
 end
 ```
 
