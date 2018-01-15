@@ -76,7 +76,7 @@ defmodule LoggerGraylogBackend.Tcp do
       {:ok, state}
     else
       :error ->
-        {:ok, %{state | socket: :disconnected}}
+        {:ok, try_connect(%{state | socket: :disconnected})}
 
       _ ->
         {:ok, state}
