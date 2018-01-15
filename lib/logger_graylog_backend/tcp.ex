@@ -11,6 +11,7 @@ defmodule LoggerGraylogBackend.Tcp do
     :host,
     :port,
     :gelf_host,
+    :backoff,
     socket: :disconnected,
     level: :info,
     metadata_filter: [],
@@ -18,6 +19,8 @@ defmodule LoggerGraylogBackend.Tcp do
   ]
 
   @levels [:debug, :info, :warn, :error]
+  @backoff_start 2
+  @backoff_max 30
 
   @type host :: :inet.hostname() | :inet.ip_address()
   @type metadata_filter :: :all | [atom] | {module, function :: atom}
@@ -28,7 +31,8 @@ defmodule LoggerGraylogBackend.Tcp do
           level: Logger.level(),
           metadata_filter: metadata_filter,
           gelf_host: Formatter.host(),
-          include_timestamp: boolean
+          include_timestamp: boolean,
+          backoff: :backoff.backoff()
         }
 
   ## :gen_event callbacks
@@ -192,14 +196,15 @@ defmodule LoggerGraylogBackend.Tcp do
   end
 
   @spec try_connect(state) :: state
-  defp try_connect(%{socket: :disconnected, host: host, port: port} = state) do
+  defp try_connect(%{socket: :disconnected, host: host, port: port, backoff: backoff} = state) do
     case :gen_tcp.connect(host, port, [:binary, active: false], 5000) do
       {:ok, socket} ->
         Logger.info(fn -> "Connected to #{format_endpoint(host, port)}" end)
+        {_, backoff} = :backoff.succeed(backoff)
         %{state | socket: {:connected, socket}}
 
       {:error, reason} ->
-        reconnect_in = 5
+        {reconnect_in, backoff} = :backoff.fail(backoff)
         set_reconnection_timer(reconnect_in)
 
         Logger.error(fn ->
@@ -208,7 +213,7 @@ defmodule LoggerGraylogBackend.Tcp do
           }s"
         end)
 
-        state
+        %{state | backoff: backoff}
     end
   end
 
@@ -263,7 +268,8 @@ defmodule LoggerGraylogBackend.Tcp do
           level: opts[:level],
           metadata_filter: opts[:metadata],
           gelf_host: get_gelf_host(opts[:override_host]),
-          include_timestamp: opts[:include_timestamp]
+          include_timestamp: opts[:include_timestamp],
+          backoff: :backoff.init(@backoff_start, @backoff_max) |> :backoff.type(:jitter)
         }
 
         {:ok, maybe_host_to_charlist(state)}

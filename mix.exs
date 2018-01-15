@@ -22,7 +22,8 @@ defmodule LoggerGraylogBackend.MixProject do
       {:ex_doc, "~> 0.18", only: :dev, runetime: false},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:jason, "~> 1.0-rc"},
-      {:optium, "~> 0.3"}
+      {:optium, "~> 0.3"},
+      {:backoff, "~> 1.1"}
     ]
   end
 end
