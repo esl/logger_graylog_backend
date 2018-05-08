@@ -233,6 +233,7 @@ defmodule LoggerGraylogBackend.Tcp do
   @spec set_reconnection_timer(seconds :: non_neg_integer()) :: :ok
   defp set_reconnection_timer(seconds) do
     :erlang.start_timer(seconds * 1000, self(), :reconnect)
+    :ok
   end
 
   @spec maybe_host_to_charlist(map) :: map
