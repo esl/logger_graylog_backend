@@ -136,13 +136,11 @@ defmodule LoggerGraylogBackend.Tcp do
          message,
          timestamp,
          metadata,
-         %{
-           socket: {:connected, socket},
-           host: host,
-           port: port,
-           include_timestamp: include_timestamp
-         } = state
+         state
        ) do
+    %{socket: {:connected, socket}, host: host, port: port, include_timestamp: include_timestamp} =
+      state
+
     metadata_to_send =
       extract_metadata(level, message, timestamp, metadata, state.metadata_filter)
 
