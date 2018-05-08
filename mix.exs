@@ -8,10 +8,10 @@ defmodule LoggerGraylogBackend.MixProject do
       elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      # docs
       name: "LoggerGraylogBackend",
       source_url: "https://github.com/esl/logger_graylog_backend",
-      docs: docs()
+      docs: docs(),
+      preferred_cli_env: preferred_cli_env()
     ]
   end
 
@@ -23,8 +23,8 @@ defmodule LoggerGraylogBackend.MixProject do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.18", only: :dev, runetime: false},
-      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.18", only: :docs, runtime: false},
+      {:dialyxir, "~> 0.5", only: :test, runtime: false},
       {:jason, "~> 1.0"},
       {:optium, "~> 0.3"},
       {:backoff, "~> 1.1"}
@@ -37,6 +37,13 @@ defmodule LoggerGraylogBackend.MixProject do
       extras: [
         "README.md"
       ]
+    ]
+  end
+
+  defp preferred_cli_env() do
+    [
+      docs: :docs,
+      dialyzer: :test
     ]
   end
 end
