@@ -44,7 +44,9 @@ defmodule LoggerGraylogBackend.GelfFormatter do
     additional_fields =
       metadata |> Enum.map(fn {k, v} -> {["_", to_string(k)], v} end) |> Enum.into(%{})
 
-    mandatory_fields |> Map.merge(timestamp_field) |> Map.merge(additional_fields)
+    mandatory_fields
+    |> Map.merge(timestamp_field)
+    |> Map.merge(additional_fields)
     |> Jason.encode_to_iodata!()
   end
 
