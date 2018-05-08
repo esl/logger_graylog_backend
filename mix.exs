@@ -33,6 +33,7 @@ defmodule LoggerGraylogBackend.MixProject do
 
   defp docs do
     [
+      main: "README",
       extras: [
         "README.md"
       ]
