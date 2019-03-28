@@ -113,8 +113,12 @@ defmodule LoggerGraylogBackend.Tcp do
   end
 
   @impl :gen_event
-  def terminate(_, _) do
+  def terminate(_, %{socket: :disconnected}) do
     :ok
+  end
+
+  def terminate(_, %{socket: {:connected, socket}}) do
+    :gen_tcp.close(socket)
   end
 
   @impl :gen_event
@@ -136,11 +140,13 @@ defmodule LoggerGraylogBackend.Tcp do
          message,
          timestamp,
          metadata,
-         state
+         %{
+           socket: {:connected, socket},
+           host: host,
+           port: port,
+           include_timestamp: include_timestamp
+         } = state
        ) do
-    %{socket: {:connected, socket}, host: host, port: port, include_timestamp: include_timestamp} =
-      state
-
     metadata_to_send =
       extract_metadata(level, message, timestamp, metadata, state.metadata_filter)
 
@@ -231,7 +237,6 @@ defmodule LoggerGraylogBackend.Tcp do
   @spec set_reconnection_timer(seconds :: non_neg_integer()) :: :ok
   defp set_reconnection_timer(seconds) do
     :erlang.start_timer(seconds * 1000, self(), :reconnect)
-    :ok
   end
 
   @spec maybe_host_to_charlist(map) :: map
