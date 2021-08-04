@@ -72,7 +72,7 @@ defmodule LoggerGraylogBackend.Tcp do
   @impl :gen_event
   def handle_event(
         {level, gl, {Logger, message, timestamp, metadata}},
-        %{socket: {:connected, _}} = state
+        %{socket: {:connected, socket}} = state
       )
       when node(gl) == node() do
     with true <- should_log?(level, state),
@@ -80,6 +80,7 @@ defmodule LoggerGraylogBackend.Tcp do
       {:ok, state}
     else
       :error ->
+        :gen_tcp.close(socket)
         {:ok, try_connect(%{state | socket: :disconnected})}
 
       _ ->
