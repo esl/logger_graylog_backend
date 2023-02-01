@@ -66,7 +66,7 @@ defmodule LoggerGraylogBackend.GelfFormatter do
   @spec format_level(Logger.level()) :: 7 | 6 | 4 | 3
   defp format_level(:debug), do: 7
   defp format_level(:info), do: 6
-  defp format_level(:warn), do: 4
+  defp format_level(level) when level in ~w(warn warning)a, do: 4
   defp format_level(:error), do: 3
 
   @spec format_timestamp(timestamp) :: float
